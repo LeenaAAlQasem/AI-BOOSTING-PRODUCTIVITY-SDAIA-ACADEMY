@@ -1,0 +1,12 @@
+{
+  "dataset_name": "MOJ real estate sales, Q1 2024",
+  "input": "MOJ-Sales-2024-Q1.csv",
+  "as_of": "2026-10-22",
+  "redact": false,
+  "primary_key": ["الرقم المرجعي للصفقة"],
+  "optional_columns": [],
+  "ignore_columns": [],
+  "placeholder_tokens": ["لا ينطبق"],
+  "future_dates_allowed": [],
+  "thresholds": {}
+}

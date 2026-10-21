@@ -1,0 +1,287 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!--HEAD-->
+<title>__PAGE_TITLE__</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* One page: table metrics, columns (select a row to see its details), findings. Offline: system fonts only. */
+:root {
+  --bg: #f6f7f8; --surface: #ffffff; --ink: #1b2430; --ink-2: #4d5966; --muted: #77818d;
+  --line: #e1e5ea; --hover: #f2f5f8; --accent: #2b6cb0; --bar: #7aa5d6; --track: #edf0f3;
+  --critical: #a61b1b; --high: #c24e1c; --medium: #b98900; --low: #8a94a0; --info: #2b6cb0;
+  --ui: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Arabic", Tahoma, sans-serif;
+  --mono: ui-monospace, "SF Mono", "Cascadia Mono", Consolas, "DejaVu Sans Mono", monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12161b; --surface: #1a1f26; --ink: #e6eaef; --ink-2: #b4bdc8; --muted: #8893a0;
+    --line: #2b323b; --hover: #212730; --accent: #7fb0ea; --bar: #4f7fb8; --track: #262d36;
+    --critical: #f07070; --high: #f0915e; --medium: #e5bb45; --low: #8a94a0; --info: #7fb0ea;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12161b; --surface: #1a1f26; --ink: #e6eaef; --ink-2: #b4bdc8; --muted: #8893a0;
+  --line: #2b323b; --hover: #212730; --accent: #7fb0ea; --bar: #4f7fb8; --track: #262d36;
+  --critical: #f07070; --high: #f0915e; --medium: #e5bb45; --low: #8a94a0; --info: #7fb0ea;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--ui); -webkit-font-smoothing: antialiased; }
+.page { max-width: 1240px; margin: 0 auto; padding-block: 32px 56px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 36px; }
+.page > * { min-width: 0; }
+h1 { font-size: 26px; font-weight: 650; margin: 0; line-height: 1.25; overflow-wrap: anywhere; }
+h2 { font-size: 18px; font-weight: 650; margin: 0; }
+.meta { display: flex; flex-wrap: wrap; gap: 4px 24px; color: var(--muted); font-size: 13px; margin-top: 6px; }
+.meta b { color: var(--ink-2); font-weight: 500; }
+.metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+@media (max-width: 1000px) { .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.metric { padding: 16px 20px; background: var(--surface); min-width: 0; }
+.metric .v { font-size: 28px; font-weight: 600; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.metric .l { font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+.metric .s { font-size: 12.5px; color: var(--muted); margin-top: 2px; font-variant-numeric: tabular-nums; }
+.head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 10px; }
+.box { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14px; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: 12.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+tbody tr:last-child > td { border-bottom: 0; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.col { font-weight: 500; white-space: nowrap; }
+.dim { color: var(--muted); }
+.nw { white-space: nowrap; }
+tr.click { cursor: pointer; }
+tr.click:hover > td, tr.open > td { background: var(--hover); }
+tr.more > td { padding: 16px 20px 20px 32px; }
+.caret { display: inline-block; width: 16px; color: var(--muted); font-size: 10px; }
+.sev { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 13px; }
+.sev::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--c); flex: none; }
+.critical { --c: var(--critical); } .high { --c: var(--high); } .medium { --c: var(--medium); } .low { --c: var(--low); } .info { --c: var(--info); }
+.spark rect { fill: var(--bar); }
+.detail { display: grid; grid-template-columns: minmax(200px, 280px) minmax(0, 1fr); gap: 24px 48px; }
+@media (max-width: 800px) { .detail { grid-template-columns: minmax(0, 1fr); } tr.more > td { padding-left: 16px; } }
+dl.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 3px 16px; margin: 0; font-size: 14px; align-content: start; }
+dl.facts dt { color: var(--muted); }
+dl.facts dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.sub { font-size: 13px; font-weight: 600; color: var(--ink-2); margin: 0 0 6px; }
+.charts { display: grid; gap: 20px; min-width: 0; align-content: start; }
+svg text { fill: var(--muted); font: 11px var(--ui); }
+svg .axis { stroke: var(--line); }
+svg .bar { fill: var(--bar); }
+.tops { display: grid; gap: 3px; font-size: 13px; max-width: 620px; }
+.top { display: grid; grid-template-columns: minmax(80px, 220px) minmax(0, 1fr) 72px; gap: 12px; align-items: center; }
+.top .k { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.top .t { height: 8px; background: var(--track); border-radius: 2px; overflow: hidden; }
+.top .t span { display: block; height: 100%; background: var(--bar); }
+.top .c { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.cf { display: grid; gap: 4px; font-size: 14px; }
+.cf div { display: grid; grid-template-columns: 80px minmax(140px, 220px) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 700px) { .cf div { grid-template-columns: 80px minmax(0, 1fr); } .cf div > :last-child { grid-column: 2; } }
+.filters { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.tg { appearance: none; font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+.tg[aria-pressed="false"] { opacity: .45; }
+select { font: inherit; font-size: 13px; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px; max-width: 240px; }
+.ex { display: grid; gap: 10px; font-size: 14px; max-width: 980px; }
+.ex code { font: 13px var(--ui); background: var(--hover); padding: 1px 6px; border-radius: 4px; display: inline-block; margin: 0 4px 4px 0; }
+.sqlh { display: flex; align-items: center; gap: 12px; }
+pre { margin: 6px 0 0; padding: 10px 12px; background: var(--hover); border: 1px solid var(--line); border-radius: 6px; font: 12.5px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+.btn { appearance: none; font: inherit; font-size: 12.5px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 6px; padding: 2px 10px; cursor: pointer; }
+button:focus-visible, select:focus-visible, tr.click:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+footer { font-size: 12.5px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 4px 24px; }
+bdi { unicode-bidi: isolate; }
+</style>
+<!--/HEAD-->
+</head>
+<body>
+<!--BODY-->
+<div class="page">
+  <header>
+    <h1 id="name"></h1>
+    <div class="meta" id="meta"></div>
+  </header>
+  <section class="metrics" id="metrics" aria-label="Table metrics"></section>
+  <section aria-labelledby="h-cols">
+    <div class="head"><h2 id="h-cols">Columns</h2></div>
+    <div class="box"><table id="cols"></table></div>
+  </section>
+  <section aria-labelledby="h-find">
+    <div class="head"><h2 id="h-find">Findings</h2><div class="filters" id="filters"></div></div>
+    <div class="box"><table id="finds"></table></div>
+  </section>
+  <footer id="foot"></footer>
+</div>
+<script>
+const R = /*__REPORT_JSON__*/null;
+(function () {
+"use strict";
+const S = R.summary, C = R.columns, F = R.findings;
+const SEV = ["critical", "high", "medium", "low", "info"];
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const T = s => esc(s).replace(/[\u0600-\u06FF](?:[\u0600-\u06FF\s\/]*[\u0600-\u06FF])?/g, m => `<bdi>${m}</bdi>`);
+const bd = s => `<bdi>${esc(s)}</bdi>`;
+const fmt = n => n == null ? "" : Number(n).toLocaleString("en-US");
+const pct = p => p == null ? "" : p === 0 ? "0%" : p < 0.1 ? "<0.1%" : (p > 99.9 && p < 100) ? ">99.9%" : (p >= 10 ? p.toFixed(1) : p.toFixed(2).replace(/0$/, "")) + "%";
+const num = v => v == null ? "" : Math.abs(v) >= 1e9 ? (v / 1e9).toFixed(2) + " B" : Number(v).toLocaleString("en-US", { maximumFractionDigits: 2 });
+const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+const sev = s => `<span class="sev ${s}">${cap(s)}</span>`;
+const $ = id => document.getElementById(id);
+const colsOf = f => (f.column || "").split(",").map(x => x.trim()).filter(Boolean);
+const shown = v => { const t = String(v); return t === "" ? "(empty)" : t.trim() === "" ? `(${t.length} space${t.length > 1 ? "s" : ""})` : t; };
+const zero = v => `<span class="dim">${v}</span>`;
+const rows = S.rows || 1;
+
+/* Header and metrics */
+$("name").innerHTML = bd(R.meta.dataset);
+$("meta").innerHTML = `<span>File <b>${bd(S.source)}</b></span><span>Checked <b>${esc(String(R.meta.generated_at).replace("T", " "))}</b></span>`
+  + (S.sampled ? `<span>Sample of <b>${fmt(S.rows)}</b> from ${fmt(S.rows_total)} rows</span>` : "")
+  + (R.meta.redacted ? `<span>Values hidden</span>` : "");
+const nulls = C.reduce((a, c) => a + c.nulls, 0), ph = C.reduce((a, c) => a + c.placeholders, 0);
+const cnt = r => F.filter(f => f.rule === r).reduce((a, f) => a + f.affected_rows, 0);
+const dupAll = Math.min(rows, S.duplicate_rows || 0);
+const dupNote = [[cnt("DQ-U01"), "exact"], [cnt("DQ-U02"), "near"], [cnt("DQ-U05"), "differ only in the ID"]].filter(([n]) => n).map(([n, t]) => `${fmt(n)} ${t}`).join(", ");
+const bySev = SEV.filter(k => S.findings_by_severity[k]).map(k => `${S.findings_by_severity[k]} ${k}`).join(", ");
+$("metrics").innerHTML = [
+  [fmt(S.rows), "Rows", ""],
+  [fmt(S.columns), "Columns", ""],
+  [pct(100 * dupAll / rows), "Duplicate rows", dupNote],
+  [pct(100 * (nulls + ph) / (S.cells || 1)), "Empty cells", `${fmt(nulls)} null, ${fmt(ph)} placeholder`],
+  [`${S.columns_with_findings} of ${S.columns}`, "Columns with findings", ""],
+  [fmt(S.findings), "Findings", bySev]
+].map(([v, l, s]) => `<div class="metric"><div class="v">${esc(v)}</div><div class="l">${esc(l)}</div>${s ? `<div class="s">${esc(s)}</div>` : ""}</div>`).join("");
+$("foot").innerHTML = `<span>Rules ${esc(R.meta.rules_version)}</span><span>Tool ${esc(R.meta.tool_version)}</span><span>Data fingerprint ${esc(S.fingerprint)}</span>`;
+
+/* Charts */
+function spark(sp) {
+  const v = (sp && sp.values) || [];
+  if (!v.length) return "";
+  const W = 90, H = 20, mx = Math.max(1, ...v), bw = W / v.length, g = bw > 4 ? 1 : 0;
+  return `<svg class="spark" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" aria-hidden="true">` + v.map((x, i) => {
+    const h = x > 0 ? Math.max(1, (H - 1) * x / mx) : 0;
+    return `<rect x="${(i * bw).toFixed(1)}" y="${(H - h).toFixed(1)}" width="${Math.max(0.8, bw - g).toFixed(1)}" height="${h.toFixed(1)}"/>`;
+  }).join("") + `</svg>`;
+}
+function bars(values, labels, title, ends) {
+  const W = 600, H = 120, p = 6, pb = 20, n = values.length, mx = Math.max(1, ...values), bw = (W - 2 * p) / n;
+  const w = Math.min(Math.max(1, bw - (bw > 6 ? 2 : 0)), 36);
+  const b = values.map((v, i) => {
+    const h = (H - p - pb) * v / mx;
+    return `<rect class="bar" x="${(p + i * bw + (bw - w) / 2).toFixed(1)}" y="${(H - pb - h).toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}"><title>${esc(labels[i])}: ${fmt(v)}</title></rect>`;
+  }).join("");
+  const [a, z] = ends || [labels[0], labels[n - 1]];
+  const xl = `<text x="${p}" y="${H - 5}">${esc(a)}</text>` + (n > 1 ? `<text x="${W - p}" y="${H - 5}" text-anchor="end">${esc(z)}</text>` : "");
+  return `<div><p class="sub">${esc(title)}</p><svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block" role="img" aria-label="${esc(title)}">${b}<line class="axis" x1="${p}" x2="${W - p}" y1="${H - pb}" y2="${H - pb}"/>${xl}</svg></div>`;
+}
+
+/* Columns */
+const openCols = new Set();
+function colDetail(c) {
+  const facts = [["Type", c.type + (c.type !== "empty" && c.type_confidence < 100 ? `, ${pct(c.type_confidence)} of values match` : "")],
+    ["Filled", `${fmt(c.valid)} (${pct(100 * c.valid / rows)})`], ["Null", fmt(c.nulls)], ["Placeholder", fmt(c.placeholders)]];
+  if (c.catch_all) facts.push(["Catch-all", fmt(c.catch_all)]);
+  facts.push(["Type mismatch", fmt(c.mismatches)], ["Unique values", fmt(c.distinct)], ["Unique share", pct(c.distinct_pct)]);
+  const st = c.stats;
+  if (st) facts.push(["Min", num(st.min)], ["Median", num(st.median)], ["Mean", num(st.mean)], ["Max", num(st.max)], ["Zeros", fmt(st.zeros)], ["Negatives", fmt(st.negatives)]);
+  if (c.date_min) facts.push(["Earliest", c.date_min], ["Latest", c.date_max]);
+  if (c.calendar) facts.push(["Calendar", c.calendar]);
+  if (c.date_formats && Object.keys(c.date_formats).length > 1) facts.push(["Date formats", Object.entries(c.date_formats).map(([k, v]) => `${k} (${fmt(v)})`).join(", ")]);
+  if (c.type === "text" && c.length) facts.push(["Length", c.length.min === c.length.max ? String(c.length.min) : `${c.length.min} to ${c.length.max}`]);
+  const kinds = Object.entries(c.kinds || {}).filter(([k]) => k !== "null");
+  if (kinds.length > 1) facts.push(["Value kinds", kinds.map(([k, v]) => `${k} ${fmt(v)}`).join(", ")]);
+
+  const charts = [];
+  if (c.hist) { const e = c.hist.edges; const out = [c.hist.below ? `${fmt(c.hist.below)} below` : "", c.hist.above ? `${fmt(c.hist.above)} above` : ""].filter(Boolean).join(", ");
+    charts.push(bars(c.hist.counts, c.hist.counts.map((_, i) => `${num(e[i])} to ${num(e[i + 1])}`), "Distribution" + (out ? ` (${out} the range are not shown)` : ""), [num(e[0]), num(e[e.length - 1])])); }
+  else if (c.date_hist) charts.push(bars(c.date_hist.counts, c.date_hist.labels, `Rows per ${c.date_hist.unit}`));
+  const tv = (c.top_values || []).slice(0, 10);
+  if (tv.length && !(c.hist && c.distinct > 50)) {
+    const mx = Math.max(...tv.map(v => v.count)), rest = c.valid - tv.reduce((a, v) => a + v.count, 0);
+    charts.push(`<div><p class="sub">Top values</p><div class="tops">` + tv.map(v => `<div class="top"><span class="k" title="${esc(v.value)}">${bd(shown(v.value))}</span><span class="t"><span style="width:${(100 * v.count / mx).toFixed(1)}%"></span></span><span class="c">${fmt(v.count)}</span></div>`).join("")
+      + (rest > 0 ? `<div class="top"><span class="k dim">${fmt(c.distinct - tv.length)} other values</span><span></span><span class="c dim">${fmt(rest)}</span></div>` : "") + `</div></div>`);
+  }
+  const fs = F.filter(f => colsOf(f).includes(c.name));
+  if (fs.length) charts.push(`<div><p class="sub">Findings</p><div class="cf">${fs.map(f => `<div>${sev(f.severity)}<span>${esc(f.name)}</span><span>${T(f.detail)}</span></div>`).join("")}</div></div>`);
+  return `<div class="detail"><dl class="facts">${facts.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}</dl><div class="charts">${charts.join("")}</div></div>`;
+}
+function drawCols() {
+  const head = `<thead><tr><th>Column</th><th>Type</th><th class="n">Missing</th><th class="n">Type mismatch</th><th class="n">Unique values</th><th>Distribution</th><th class="n">Findings</th></tr></thead>`;
+  const body = C.map((c, i) => {
+    const open = openCols.has(i);
+    return `<tr class="click${open ? " open" : ""}" data-i="${i}" tabindex="0" aria-expanded="${open}">`
+      + `<td class="col"><span class="caret">${open ? "▼" : "▶"}</span>${bd(c.name)}</td><td>${esc(c.type)}</td>`
+      + `<td class="n">${c.missing_pct ? pct(c.missing_pct) : zero("0%")}</td>`
+      + `<td class="n">${c.mismatches ? fmt(c.mismatches) : zero(0)}</td>`
+      + `<td class="n">${fmt(c.distinct)}</td><td>${spark(c.spark)}</td>`
+      + `<td class="n">${c.findings ? `<span class="sev ${c.worst}" title="Worst: ${c.worst}">${c.findings}</span>` : zero(0)}</td></tr>`
+      + (open ? `<tr class="more"><td colspan="7">${colDetail(c)}</td></tr>` : "");
+  }).join("");
+  $("cols").innerHTML = head + `<tbody>${body}</tbody>`;
+}
+function toggle(set, key, draw, sel) {
+  set.has(key) ? set.delete(key) : set.add(key);
+  draw();
+  const el = document.querySelector(sel);
+  if (el) el.focus({ preventScroll: true });
+}
+$("cols").addEventListener("click", e => { const tr = e.target.closest("tr.click"); if (tr) toggle(openCols, +tr.dataset.i, drawCols, `#cols tr[data-i="${tr.dataset.i}"]`); });
+
+/* Findings */
+const st = { sev: new Set(SEV), col: "", open: new Set() };
+const present = SEV.filter(k => S.findings_by_severity[k]);
+$("filters").innerHTML = present.map(k => `<button class="tg" data-sev="${k}" aria-pressed="true"><span class="sev ${k}">${cap(k)} ${S.findings_by_severity[k]}</span></button>`).join("")
+  + `<select id="fcol" aria-label="Filter by column"><option value="">All columns</option>${F.some(f => !f.column) ? `<option value="(table)">Whole table</option>` : ""}${C.filter(c => c.findings).map(c => `<option value="${esc(c.name)}">${esc(c.name)}</option>`).join("")}</select>`;
+$("filters").addEventListener("click", e => {
+  const b = e.target.closest(".tg"); if (!b) return;
+  const k = b.dataset.sev; st.sev.has(k) ? st.sev.delete(k) : st.sev.add(k);
+  b.setAttribute("aria-pressed", String(st.sev.has(k))); drawFinds();
+});
+$("fcol").addEventListener("change", e => { st.col = e.target.value; drawFinds(); });
+function drawFinds() {
+  const list = F.filter(f => st.sev.has(f.severity) && (!st.col || (st.col === "(table)" ? !f.column : colsOf(f).includes(st.col))));
+  const head = `<thead><tr><th>Severity</th><th>Column</th><th>Issue</th><th class="n">Rows</th><th>Detail</th></tr></thead>`;
+  const body = list.map(f => {
+    const ex = (f.evidence && f.evidence.values) || [], vr = (f.evidence && f.evidence.variants) || [];
+    const has = ex.length || vr.length || f.sql, open = has && st.open.has(f.id);
+    const r = f.affected_rows ? `${fmt(f.affected_rows)} <span class="dim">(${pct(f.affected_pct)})</span>` : zero("–");
+    let more = "";
+    if (open) {
+      more = `<tr class="more"><td colspan="5"><div class="ex">`
+        + (ex.length ? `<div><p class="sub">Examples</p>${ex.map(v => `<code>${bd(shown(v))}</code>`).join("")}</div>` : "")
+        + (vr.length ? `<div><p class="sub">Spellings</p>${vr.map(v => `<code>${bd(Array.isArray(v) ? v.join(" / ") : v)}</code>`).join("")}</div>` : "")
+        + (f.sql ? `<div><div class="sqlh"><p class="sub" style="margin:0">SQL</p><button class="btn" data-copy>Copy</button></div><pre>${esc(f.sql)}</pre></div>` : "")
+        + `</div></td></tr>`;
+    }
+    return `<tr class="${has ? "click" : ""}${open ? " open" : ""}" data-id="${esc(f.id)}"${has ? ` tabindex="0" aria-expanded="${open}"` : ""}>`
+      + `<td>${sev(f.severity)}</td><td class="col"><span class="caret">${has ? (open ? "▼" : "▶") : ""}</span>${f.column ? bd(f.column) : '<span class="dim">whole table</span>'}</td>`
+      + `<td class="nw">${esc(f.name)}</td><td class="n">${r}</td><td>${T(f.detail)}</td></tr>` + more;
+  }).join("") || `<tr><td colspan="5" class="dim">No findings match the filters.</td></tr>`;
+  $("finds").innerHTML = head + `<tbody>${body}</tbody>`;
+}
+$("finds").addEventListener("click", e => {
+  const cp = e.target.closest("[data-copy]");
+  if (cp) {
+    const pre = cp.closest("div").parentNode.querySelector("pre");
+    const done = t => { cp.textContent = t; setTimeout(() => { cp.textContent = "Copy"; }, 1500); };
+    const select = () => { const r = document.createRange(); r.selectNodeContents(pre); const s = getSelection(); s.removeAllRanges(); s.addRange(r); done("Selected"); };
+    try { navigator.clipboard.writeText(pre.textContent).then(() => done("Copied"), select); } catch (err) { select(); }
+    return;
+  }
+  const tr = e.target.closest("tr.click");
+  if (tr) toggle(st.open, tr.dataset.id, drawFinds, `#finds tr[data-id="${tr.dataset.id}"]`);
+});
+for (const id of ["cols", "finds"]) $(id).addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches("tr.click")) { e.preventDefault(); e.target.click(); }
+});
+
+drawCols();
+drawFinds();
+})();
+</script>
+<!--/BODY-->
+</body>
+</html>
